@@ -1,0 +1,17 @@
+Republic TV
+Average likes    :  50.955206599609234 Total likes : 704150
+Average retweets :  20.498950720023156 Total retweets : 283275
+Tweets analyzed  : 13819
+Times Now
+Average likes    :  66.52655828914196 Total likes : 765255
+Average retweets :  27.719290619838304 Total retweets : 318855
+Tweets analyzed  : 11503
+
+Top 150 tweets sentiment.
+Republic
+Likes 0.05325090187590187 -0.03370333333333336
+RTs 0.04089273689273688 0.04089273689273688
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Times Now
+Likes 0.015671997755331082 -0.0685173333333333
+RTs 0.009073232323232322 0.009073232323232322
