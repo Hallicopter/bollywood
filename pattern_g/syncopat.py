@@ -1,20 +1,26 @@
+print("Loading dependencies...")
 import pickle
 from collections import Counter
 import re
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import train_test_split
-import nltk
-from nltk.corpus import stopwords
-from nltk.classify import SklearnClassifier
-from textblob import TextBlob
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from wordcloud import WordCloud,STOPWORDS
+# from sklearn.model_selection import train_test_split
+# import nltk
+# from nltk.corpus import stopwords
+# from nltk.classify import SklearnClassifier
+# from textblob import TextBlob
+# from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+# from nltk.tokenize import RegexpTokenizer
+# from wordcloud import WordCloud,STOPWORDS
 import pandas as pd
-import scattertext as st
-import spacy
+# import scattertext as st
+# import spacy
+import datetime
 from pprint import pprint
-
+from nltk import word_tokenize
+from nltk.util import ngrams
+import seaborn as sns
+print("Loaded dependencies...")
 master = pickle.load( open( "week_sync.p", "rb" ) )
 no = 0
 
@@ -112,9 +118,9 @@ def clean_string(s):
             text = re.sub(r"(^:)",'',text)
             return text.strip()
     
-
-def likey_tweetey(d , s):
+def likey_tweetey(d, d2 , s):
     rts = []
+    rts2 = []
     avg_rt = 0
     avg_likes = 0
     likes = []
@@ -125,13 +131,42 @@ def likey_tweetey(d , s):
             avg_likes += int(d[i][j].likes)
             avg_rt += int(d[i][j].retweets)
             likes.append([int(d[i][j].likes) , d[i][j] ])
+    
+    for i in range(40, 52):
+        for j in range(len(d2[i])):
+            rts2.append([int(d2[i][j].retweets) , d2[i][j] ])
+            avg_likes += int(d2[i][j].likes)
+            avg_rt += int(d2[i][j].retweets)
+            likes.append([int(d2[i][j].likes) , d2[i][j] ])
+            
             
     
     # print("Average likes    : ", avg_likes/no, "Total likes :", avg_likes)
     # print("Average retweets : ", avg_rt/no, "Total retweets :", avg_rt )
     # print("Tweets analyzed  :", no)
     trsort = sorted(rts, reverse = True)
+    trsort2 = sorted(rts2, reverse = True)
     lsort = sorted(likes, reverse = True)
+
+    y = [i[0] for i in trsort][:5]
+    y2 = [i[0] for i in trsort2][:5]
+    x1 = [-5]*5
+    x2 = [5]*5
+    fig, ax = plt.subplots()
+    ax.scatter(x1, y)
+    ax.scatter(x2, y2)
+    # plt.yticks(range(50000,320000,20000))
+    n=[str(i[1].text) for i in trsort][:5]
+    n2=[str(i[1].text) for i in trsort2][:5]
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    for i, txt in enumerate(n):
+        ax.annotate(txt, (x1[i],y[i]), color = "white", horizontalalignment='center',
+         backgroundcolor='blue',wrap=True)
+    for i, txt in enumerate(n2):
+        ax.annotate(txt, (x2[i],y2[i]), color = "white", horizontalalignment='center',
+                    backgroundcolor='red',wrap=True)
+    plt.xticks(range(-10,10))
+    plt.show()
     # plt.plot([i[0] for i in trsort])
     # print(lsort[0])
     # # plt.yticks(range(0, 1800, 400))
@@ -158,7 +193,116 @@ def likey_tweetey(d , s):
     print("RTs" , senti_r/no, senti_r/no)
 
 def scatter_skill():
-    pass
+    for_df = []
+    labels = ["Channel", "Tweet"]
+    for i in range(40, 52):
+        for j in range(len(rtv_dict[i])):
+            s = re.sub(r'(http?:\/\/.*[\r\n]*)|(pic.twitter.com/[A-Za-z0-9]+)','', str(rtv_dict[i][j].text))
+            for_df.append(("RepublicTV", s))
+    
+    for i in range(40, 52):
+        for j in range(len(tn_dict[i])):
+            s = re.sub(r'(http?:\/\/.*[\r\n]*)|(pic.twitter.com/[A-Za-z0-9]+)','', str(tn_dict[i][j].text))
+            for_df.append(("Times Now", s))
+    
+    df = pd.DataFrame.from_records(for_df, columns=labels)
+    nlp = spacy.load('en')
+    corpus = st.CorpusFromPandas(df, 
+                                category_col='Channel', 
+                                text_col='Tweet',
+                                nlp=nlp).build()
+    html = st.produce_scattertext_explorer(corpus,
+                                            category='Times Now',
+                                            category_name='Times Now TV',
+                                            not_category_name='RepublicTV News',
+                                            width_in_pixels=1000)
+    open("Convention-Visualization.html", 'wb').write(html.encode('utf-8'))
 
-likey_tweetey(rtv_dict, "RepublicTV")
-likey_tweetey(tn_dict, "Times Now")
+def n_grams(n, d):
+    text = ""
+    for i in range(40, 52):
+        for j in range(len(d[i])):
+            s = re.sub(r'(http?:\/\/.*[\r\n]*)|(pic.twitter.com/[A-Za-z0-9]+)','', str(d[i][j].text))
+            s = " " + s
+            text += s
+    
+    # token = nltk.word_tokenize(text)
+    
+    tokenizer = RegexpTokenizer(r'\w+')
+    token = tokenizer.tokenize(text)
+    grams = ngrams(token,n)
+    print(Counter(grams).most_common(20))
+    
+def heatmap(d1, s):
+    freq_matrix = np.zeros((12, 7))
+    for i in range(40, 52):
+        for j in range(len(d1[i])):
+            d1[i][j].timestamp += datetime.timedelta(hours=5.5)
+            freq_matrix[i%40,(d1[i][j].timestamp.isocalendar()[2]-1)]+=1
+    # for i in range(40, 52):
+    #     for j in range(len(d2[i])):
+    #         d2[i][j].timestamp += datetime.timedelta(hours=5.5)
+    #         freq_matrix[i%40,(d2[i][j].timestamp.isocalendar()[2]-1)]+=1
+    # print(freq_matrix)
+    
+    ax = sns.heatmap(freq_matrix, annot=False, fmt=".1f", vmin=0, vmax=430)
+    ax.set_xticklabels(["Monday", "Tueday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+    ax.set_yticklabels(range(51,39,-1))
+    ax.set_ylabel("Week Number")
+    ax.set_xlabel("Day of the week")
+    ax.set_title("Heatmap of tweet frequency - " + s)
+    plt.show()
+
+def get_range(n):
+    if 0<=n<=1:
+        return 0    
+    if 2<=n<=3:
+        return 1
+    if 4<=n<=5:
+        return 2
+    if 6<=n<=7:
+        return 3
+    if 8<=n<=9:
+        return 4
+    if 10<=n<=11:
+        return 5
+    if 12<=n<=13:
+        return 6
+    if 14<=n<=15:
+        return 7
+    if 16<=n<=17:
+        return 8
+    if 18<=n<=19:
+        return 9
+    if 20<=n<=21:
+        return 10
+    if 22<=n<=23:
+        return 11   
+
+def heatmap_day(d, s):
+    freq_matrix = np.zeros((7, 12))
+    for i in range(40, 52):
+        for j in range(len(d[i])):
+            # print(d[i][j].timestamp.hour)
+            d[i][j].timestamp += datetime.timedelta(hours=5.5)
+            
+            freq_matrix[(d[i][j].timestamp.isocalendar()[2]-1), get_range(d[i][j].timestamp.hour)]+=1
+    
+    ax = sns.heatmap(freq_matrix, annot=False, fmt=".1f")
+    ax.set_yticklabels(["Monday", "Tueday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][::-1])
+    ax.set_xticklabels(["12-2 AM", "2-4 AM", "4-6 AM", "6-8 AM", "8-10 AM", "10-12 AM", "12-2 PM",
+                        "2-4 PM", "4-6 PM", "6-8 PM", "8-10 PM", "10-12 AM"])
+    ax.set_xlabel("Time of the day")
+    ax.set_ylabel("Day of the week")
+    ax.set_title("Heatmap of tweet frequency - " + s)
+    plt.show()
+
+likey_tweetey(rtv_dict, tn_dict, "RepublicTV")
+# likey_tweetey(tn_dict, "Times Now")
+# scatter_skill()
+
+# n_grams(2, rtv_dict)
+# n_grams(2, tn_dict)
+
+# heatmap(rtv_dict,"RepublicTV")
+
