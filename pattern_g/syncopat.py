@@ -5,12 +5,12 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 # from sklearn.model_selection import train_test_split
-# import nltk
-# from nltk.corpus import stopwords
-# from nltk.classify import SklearnClassifier
-# from textblob import TextBlob
-# from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-# from nltk.tokenize import RegexpTokenizer
+import nltk
+from nltk.corpus import stopwords
+from nltk.classify import SklearnClassifier
+from textblob import TextBlob
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from nltk.tokenize import RegexpTokenizer
 # from wordcloud import WordCloud,STOPWORDS
 import pandas as pd
 # import scattertext as st
@@ -148,25 +148,25 @@ def likey_tweetey(d, d2 , s):
     trsort2 = sorted(rts2, reverse = True)
     lsort = sorted(likes, reverse = True)
 
-    y = [i[0] for i in trsort][:5]
-    y2 = [i[0] for i in trsort2][:5]
-    x1 = [-5]*5
-    x2 = [5]*5
-    fig, ax = plt.subplots()
-    ax.scatter(x1, y)
-    ax.scatter(x2, y2)
-    # plt.yticks(range(50000,320000,20000))
-    n=[str(i[1].text) for i in trsort][:5]
-    n2=[str(i[1].text) for i in trsort2][:5]
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    for i, txt in enumerate(n):
-        ax.annotate(txt, (x1[i],y[i]), color = "white", horizontalalignment='center',
-         backgroundcolor='blue',wrap=True)
-    for i, txt in enumerate(n2):
-        ax.annotate(txt, (x2[i],y2[i]), color = "white", horizontalalignment='center',
-                    backgroundcolor='red',wrap=True)
-    plt.xticks(range(-10,10))
-    plt.show()
+    # y = [i[0] for i in trsort][:5]
+    # y2 = [i[0] for i in trsort2][:5]
+    # x1 = [-5]*5
+    # x2 = [5]*5
+    # fig, ax = plt.subplots()
+    # ax.scatter(x1, y)
+    # ax.scatter(x2, y2)
+    # # plt.yticks(range(50000,320000,20000))
+    # n=[str(i[1].text) for i in trsort][:5]
+    # n2=[str(i[1].text) for i in trsort2][:5]
+    # props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    # for i, txt in enumerate(n):
+    #     ax.annotate(txt, (x1[i],y[i]), color = "white", horizontalalignment='center',
+    #      backgroundcolor='blue',wrap=True)
+    # for i, txt in enumerate(n2):
+    #     ax.annotate(txt, (x2[i],y2[i]), color = "white", horizontalalignment='center',
+    #                 backgroundcolor='red',wrap=True)
+    # plt.xticks(range(-10,10))
+    # plt.show()
     # plt.plot([i[0] for i in trsort])
     # print(lsort[0])
     # # plt.yticks(range(0, 1800, 400))
@@ -181,7 +181,7 @@ def likey_tweetey(d, d2 , s):
     analyser = SentimentIntensityAnalyzer()
     for s, x in zip(trsort, lsort):
         st = str(s[1].text)
-        if "cong" in st.lower() or "rahul" in st.lower(): 
+        if "bjp" in st.lower() : 
             senti_r += TextBlob(clean_string(s[1].text)).sentiment[0]
             senti_R += analyser.polarity_scores(clean_string(s[1].text))['compound']
             senti_l += TextBlob(clean_string(x[1].text)).sentiment[0]
@@ -189,8 +189,8 @@ def likey_tweetey(d, d2 , s):
             no+=1
         # print(TextBlob(clean_string(s[1].text)).sentiment[0],"-" ,analyser.polarity_scores(clean_string(s[1].text))['compound'])
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print("Likes" , senti_l/no, senti_L/no)
-    print("RTs" , senti_r/no, senti_r/no)
+    print("Likes VADER" ,senti_L/no, no)
+    print("RTs VADER" , senti_r/no)
 
 def scatter_skill():
     for_df = []
@@ -227,12 +227,29 @@ def n_grams(n, d):
             text += s
     
     # token = nltk.word_tokenize(text)
+    stop = set(stopwords.words('english'))
     
     tokenizer = RegexpTokenizer(r'\w+')
     token = tokenizer.tokenize(text)
-    grams = ngrams(token,n)
-    print(Counter(grams).most_common(20))
-    
+    filtered_sentence = [w for w in token if not w in stop]
+
+    grams = ngrams(filtered_sentence, n)
+    dict1 = list(Counter(grams).most_common(30))
+    dict2 = list(dict1)
+    dat = list([int(s[1]) for s in dict1])
+    lab = list([" ".join(s[0]) for s in dict2])
+    # plt.plot(Counter(grams).most_common(20))
+    print(lab)
+    x = np.arange(len(dat))
+    plt.bar(x, dat)
+    for a,b,c in zip(x, lab, dat):
+        plt.text(a, c, b, rotation = 'vertical',
+                verticalalignment='top', horizontalalignment='center', color='white')
+    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='on', labelbottom='off')
+
+    plt.title("Most common words in a tweet.")
+    plt.show()
+
 def heatmap(d1, s):
     freq_matrix = np.zeros((12, 7))
     for i in range(40, 52):
@@ -297,12 +314,45 @@ def heatmap_day(d, s):
     ax.set_title("Heatmap of tweet frequency - " + s)
     plt.show()
 
-likey_tweetey(rtv_dict, tn_dict, "RepublicTV")
+def sent(d, s):
+    analyser = SentimentIntensityAnalyzer()
+    senti = 0
+    neg = 0
+    pos = 0
+    neu = 0
+    no = 0
+    neg_c = 0
+    pos_c = 0
+    for i in range(40, 52):
+        for j in range(len(d[i])):
+            st = str(d[i][j].text)
+            if s in st.lower():
+                net = analyser.polarity_scores(clean_string(st))['compound']
+                senti += net
+                if net<-0.2:
+                    neg_c += 1
+                    
+                if net>0.2:
+                    pos_c += 1
+                    
+                neg += analyser.polarity_scores(clean_string(st))['neg']
+                pos += analyser.polarity_scores(clean_string(st))['pos']
+                neu += analyser.polarity_scores(clean_string(st))['neu']
+                no+=1
+    print("VADER" , senti/no, no, s)
+    print("Neutral", neu/no, "Positive", pos/no, "Negative", neg/no)
+    print("% negative", neg_c/no * 100)
+    print("% positive", pos_c/no * 100)
+    print("% neutral", 100 - neg_c/no * 100 - pos_c/no * 100)
+    plt.pie([pos_c, neg_c, no - pos_c - neg_c], labels = ["Positive", "Negative", "Neutral"])
+    plt.show()
+            
+
+# likey_tweetey(tn_dict, tn_dict, "RepublicTV")
 # likey_tweetey(tn_dict, "Times Now")
 # scatter_skill()
 
-# n_grams(2, rtv_dict)
-# n_grams(2, tn_dict)
+n_grams(2, rtv_dict)
+n_grams(2, tn_dict)
 
 # heatmap(rtv_dict,"RepublicTV")
-
