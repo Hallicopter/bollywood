@@ -1,8 +1,10 @@
 import json
-from pprint import pprint
 from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
+import plotly.offline as py
+py.init_notebook_mode()
+%matplotlib notebook
 
 data = json.load(open('betatest.json'))
 
@@ -13,7 +15,7 @@ for datum in data:
         runtimes.append(int(datum['runtime']))
         releases.append(str(datum['release']))
         print(int(datum['runtime']), datum['film_name'][0])
-print(len(runtimes), len(releases))
+# print(len(runtimes), len(releases))
 
 fig, ax = plt.subplots(1,1) 
 ax.plot(runtimes)
@@ -26,4 +28,6 @@ plt.plot([coefficients[0]*x + coefficients[1] for x in range(len(runtimes))])
 plt.xlabel("Year of release")
 plt.ylabel("Runtime (in minutes)")
 plt.title("Movie runtimes over the 50 years of bollywood")
-plt.show()
+fig = plt.gcf() # "Get current figure"
+py.iplot_mpl(fig)
+# plt.show()

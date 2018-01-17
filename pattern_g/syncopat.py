@@ -68,8 +68,9 @@ def pop_hstgs():
             week_hstgs.append(hstgs)
         flat_list2 = [item for sublist in week_hstgs for item in sublist]
         mega_hstgs.append(flat_list2)
-        # counter = Counter(flat_list)
-        # print(counter.most_common(5))
+    mega_hstgs = [item for sublist in mega_hstgs for item in sublist]
+    counter = Counter(mega_hstgs)
+    print(counter.most_common(50))
         
         # flat_list = list(set(flat_list))
         # r = 0
@@ -82,14 +83,14 @@ def pop_hstgs():
         # print("Rahul:", r, "| Modi", m)
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     
-    flat_list = [item for sublist in mega_hstgs for item in sublist]
-    counter = Counter(flat_list)
-    word_cloud = WordCloud(width=1920, height = 1080).generate_from_frequencies(counter)
+    # flat_list = [item for sublist in mega_hstgs for item in sublist]
+    # counter = Counter(flat_list)
+    # word_cloud = WordCloud(width=1920, height = 1080).generate_from_frequencies(counter)
 
-    plt.imshow(word_cloud)
-    plt.axis("off")
+    # plt.imshow(word_cloud)
+    # plt.axis("off")
 
-    plt.savefig('tn_wordcloud.png', bbox_inches='tight', dpi= 1000)
+    # plt.savefig('tn_wordcloud.png', bbox_inches='tight', dpi= 1000)
     
     # x1 = list(np.array(np.linspace(40, 51, 12))+0.15)
     # x2 = list(np.array(np.linspace(40, 51, 12))-0.15)
@@ -124,6 +125,7 @@ def likey_tweetey(d, d2 , s):
     avg_rt = 0
     avg_likes = 0
     likes = []
+    likes2= []
     
     for i in range(40, 52):
         for j in range(len(d[i])):
@@ -137,7 +139,7 @@ def likey_tweetey(d, d2 , s):
             rts2.append([int(d2[i][j].retweets) , d2[i][j] ])
             avg_likes += int(d2[i][j].likes)
             avg_rt += int(d2[i][j].retweets)
-            likes.append([int(d2[i][j].likes) , d2[i][j] ])
+            likes2.append([int(d2[i][j].likes) , d2[i][j] ])
             
             
     
@@ -147,7 +149,9 @@ def likey_tweetey(d, d2 , s):
     trsort = sorted(rts, reverse = True)
     trsort2 = sorted(rts2, reverse = True)
     lsort = sorted(likes, reverse = True)
+    lsort2 = sorted(likes2, reverse = True)
 
+    print([(el[1].text,el[0]) for el in trsort2[:5]])
     # y = [i[0] for i in trsort][:5]
     # y2 = [i[0] for i in trsort2][:5]
     # x1 = [-5]*5
@@ -173,24 +177,24 @@ def likey_tweetey(d, d2 , s):
     # plt.title("Retweets per tweet for all tweets sorted - "+s)
     # plt.xlabel("Retweets")
     # plt.show()
-    senti_r = 0
-    senti_R = 0
-    senti_l = 0
-    senti_L = 0
-    no = 0
-    analyser = SentimentIntensityAnalyzer()
-    for s, x in zip(trsort, lsort):
-        st = str(s[1].text)
-        if "bjp" in st.lower() : 
-            senti_r += TextBlob(clean_string(s[1].text)).sentiment[0]
-            senti_R += analyser.polarity_scores(clean_string(s[1].text))['compound']
-            senti_l += TextBlob(clean_string(x[1].text)).sentiment[0]
-            senti_L += analyser.polarity_scores(clean_string(x[1].text))['compound']
-            no+=1
-        # print(TextBlob(clean_string(s[1].text)).sentiment[0],"-" ,analyser.polarity_scores(clean_string(s[1].text))['compound'])
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print("Likes VADER" ,senti_L/no, no)
-    print("RTs VADER" , senti_r/no)
+    # senti_r = 0
+    # senti_R = 0
+    # senti_l = 0
+    # senti_L = 0
+    # no = 0
+    # analyser = SentimentIntensityAnalyzer()
+    # for s, x in zip(trsort, lsort):
+    #     st = str(s[1].text)
+    #     if "bjp" in st.lower() : 
+    #         senti_r += TextBlob(clean_string(s[1].text)).sentiment[0]
+    #         senti_R += analyser.polarity_scores(clean_string(s[1].text))['compound']
+    #         senti_l += TextBlob(clean_string(x[1].text)).sentiment[0]
+    #         senti_L += analyser.polarity_scores(clean_string(x[1].text))['compound']
+    #         no+=1
+    #     # print(TextBlob(clean_string(s[1].text)).sentiment[0],"-" ,analyser.polarity_scores(clean_string(s[1].text))['compound'])
+    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    # print("Likes VADER" ,senti_L/no, no)
+    # print("RTs VADER" , senti_r/no)
 
 def scatter_skill():
     for_df = []
@@ -348,11 +352,12 @@ def sent(d, s):
     plt.show()
             
 
-# likey_tweetey(tn_dict, tn_dict, "RepublicTV")
+likey_tweetey(tn_dict, rtv_dict, "RepublicTV")
 # likey_tweetey(tn_dict, "Times Now")
 # scatter_skill()
 
-n_grams(2, rtv_dict)
-n_grams(2, tn_dict)
+# n_grams(2, rtv_dict)
+# n_grams(2, tn_dict)
 
 # heatmap(rtv_dict,"RepublicTV")
+# pop_hstgs()
